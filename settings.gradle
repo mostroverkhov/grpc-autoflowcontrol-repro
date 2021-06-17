@@ -1,0 +1,14 @@
+pluginManagement {
+    plugins {
+        id "com.google.protobuf" version "${protobufPluginVersion}"
+        id "io.spring.dependency-management" version "${dependencyManagementPluginVersion}"
+        id "com.github.sherter.google-java-format" version "${googleJavaFormatPluginVersion}"
+        id "com.google.osdetector" version "${osdetectorPluginVersion}"
+    }
+}
+
+rootProject.name = "grpc-autoflowcontrol-parent"
+
+include "idl"
+include "server"
+include "client"

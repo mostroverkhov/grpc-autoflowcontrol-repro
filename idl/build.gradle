@@ -1,0 +1,27 @@
+plugins {
+    id "java"
+    id "com.google.protobuf"
+    id "idea"
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc"
+    }
+    generateProtoTasks {
+        all()*.enabled = false
+    }
+}
+
+sourceSets {
+    main {
+        proto { srcDir "src/main/proto" }
+    }
+}
+
+idea {
+    module {
+        sourceDirs += file("src/main/proto")
+    }
+}
+
