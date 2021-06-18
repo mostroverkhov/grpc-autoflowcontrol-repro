@@ -4,10 +4,12 @@ import io.grpc.Codec;
 import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
+import io.grpc.internal.GrpcJavaReflectiveFramesListener;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 import org.slf4j.Logger;
@@ -47,6 +49,8 @@ public class Main {
 
     Request request = Request.newBuilder().setTimestamp(System.currentTimeMillis()).build();
 
+    AtomicBoolean hasListener = new AtomicBoolean();
+
     counter.requests(
         requests -> {
           for (int i = 0; i < requests; i++) {
@@ -58,6 +62,9 @@ public class Main {
 
                   @Override
                   public void onNext(Response value) {
+                    if (!hasListener.get() && hasListener.compareAndSet(false, true)) {
+                      GrpcJavaReflectiveFramesListener.set(channel);
+                    }
                     counter.count();
                   }
 
