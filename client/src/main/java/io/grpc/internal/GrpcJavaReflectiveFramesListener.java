@@ -4,10 +4,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.netty.channel.ChannelFuture;
 import io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
 import io.grpc.netty.shaded.io.netty.channel.ChannelPromise;
-import io.grpc.netty.shaded.io.netty.handler.codec.http2.DecoratingHttp2ConnectionEncoder;
-import io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionEncoder;
-import io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler;
-import io.grpc.netty.shaded.io.netty.handler.codec.http2.StreamBufferingEncoder;
+import io.grpc.netty.shaded.io.netty.handler.codec.http2.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,8 +51,25 @@ public class GrpcJavaReflectiveFramesListener {
       OutboundPingFramesListener listenerEncoder =
           new OutboundPingFramesListener(streamBufferingEncoder);
       encoderField.set(nettyClientHandler, listenerEncoder);
+      Http2ConnectionDecoder decoder = nettyClientHandler.decoder();
+      Http2FrameListener decoderListener = decoder.frameListener();
+      decoder.frameListener(new InboundPingFrameListener(decoderListener));
     } catch (NoSuchFieldException | IllegalAccessException | ClassNotFoundException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  static class InboundPingFrameListener extends Http2FrameListenerDecorator {
+    int rounds;
+
+    public InboundPingFrameListener(Http2FrameListener listener) {
+      super(listener);
+    }
+
+    @Override
+    public void onPingRead(ChannelHandlerContext ctx, long data) throws Http2Exception {
+      logger.info("round {} - I am grpc-java client and receiving PING frames", ++rounds);
+      super.onPingRead(ctx, data);
     }
   }
 
